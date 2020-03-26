@@ -1,4 +1,4 @@
-pragma solidity ^0.4.24;
+pragma solidity >=0.6;
 
 
 /******************************************************************************************************* */
@@ -37,8 +37,8 @@ library SafeMath {
 
 /******************************************************************************************************* */
 /* App interface */
-contract App {
-  function receiveTransaction(address from, uint256 value, address tokenAddress, bytes param) public returns (bool);
+abstract contract App {
+  function receiveTransaction(address from, uint256 value, address tokenAddress, bytes calldata param) external virtual returns (bool);
 }
 
 
@@ -69,7 +69,7 @@ contract BasicToken {
     constructor() public {
         name = "BasicToken";                                   
         symbol = "BT";                               
-        decimals = 18;                                      
+        decimals = 0;                                      
         mult_dec = 10**uint256(decimals);
         currentSupply = 0;
         minPrice = 1000000000000000;
@@ -90,7 +90,7 @@ contract BasicToken {
         uint256 quantity = msg.value.mul(mult_dec).div(tokenPrice);                            
         balances[msg.sender] = balances[msg.sender].add(quantity);                
         currentSupply = currentSupply.add(quantity);                                
-        emit Transfer(this,msg.sender,quantity); 
+        emit Transfer(address(this),msg.sender,quantity); 
         return true;                                       
     }
     
@@ -111,10 +111,10 @@ contract BasicToken {
     }
     
 
-    function approveAndCall(address appAddress, uint256 amount, bytes param) public returns(bool) {
+    function approveAndCall(address appAddress, uint256 amount, bytes memory param) public returns(bool) {
         approval(appAddress, amount);
         App app = App(appAddress);
-        app.receiveTransaction(msg.sender, amount, this, param);
+        app.receiveTransaction(msg.sender, amount, address(this), param);
         return true;
     }
     
@@ -130,7 +130,11 @@ contract BasicToken {
     
     
 
-    function () public payable {}
+    fallback() external {}
+    
+    receive() payable external{}
+
+        
+    
     
 }
-    
